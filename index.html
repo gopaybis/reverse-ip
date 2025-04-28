@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reverse IP Lookup</title>
+    <style>
+        /* Mengatur background hitam dan garis biru */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Frame dengan garis biru */
+        .container {
+            border: 5px solid blue;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px; /* Memperkecil lebar frame */
+            box-sizing: border-box;
+            height: 50vh; /* Menyesuaikan tinggi container agar bisa di-scroll */
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Menambahkan scrollable area untuk output */
+        #output {
+            background: #eee;
+            padding: 10px;
+            color: black;
+            overflow-y: auto; /* Menambahkan scroll vertikal */
+            flex-grow: 1; /* Agar hasil bisa mengisi sisa ruang */
+            max-height: 300px; /* Membatasi tinggi bagian output agar bisa di-scroll */
+        }
+
+        /* Membatasi ukuran halaman agar tidak lebih besar dari layar */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reverse IP Lookup</h1>
+        <p>Enter one or multiple IP addresses (one per line):</p>
+        <textarea id="ip-list"></textarea><br>
+        <button onclick="lookup()">Start Lookup</button>
+        <button onclick="downloadResults()">Download Results</button>
+
+        <h2>Results:</h2>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        const workerURL = "https://apirevip.apkfiles588.workers.dev"; // GANTI dengan URL Worker kamu
+        let lastResult = "";
+
+        async function lookup() {
+            const input = document.getElementById('ip-list').value.trim();
+            if (!input) {
+                alert('Please enter at least one IP.');
+                return;
+            }
+
+            const ips = input.split('\n').map(line => line.trim()).filter(line => line !== '');
+            document.getElementById('output').textContent = 'Processing...';
+
+            try {
+                const response = await fetch(workerURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ips })
+                });
+                const data = await response.json();
+                let output = '';
+                for (const [ip, result] of Object.entries(data)) {
+                    output += `Results for ${ip}:\n`;
+                    if (result.status === 'success') {
+                        output += result.domains.join('\n') + '\n';
+                    } else {
+                        output += `Error: ${result.message}\n`;
+                    }
+                    output += "=========================================\n";
+                }
+                document.getElementById('output').textContent = output;
+                lastResult = output;
+            } catch (error) {
+                document.getElementById('output').textContent = 'Error: ' + error;
+            }
+        }
+
+        function downloadResults() {
+            if (!lastResult) {
+                alert('No results to download!');
+                return;
+            }
+
+            const blob = new Blob([lastResult], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'reverse_ip_results.txt';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
