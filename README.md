@@ -13,7 +13,7 @@ Gantilah URL workerURL pada UI HTML (index.html) sebelumnya dengan URL Worker ka
 
 
 # **index.html**
-upload di github page/vps/cpanel dll
+deploy atau upload di github page/vps/cpanel dll
 
 # screenshot
         
